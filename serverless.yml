@@ -6,7 +6,7 @@ provider:
   runtime: nodejs18.x
   region: us-east-1
   environment:
-    OPENAI_API_KEY: ${ssm:lynch-objection-engine}
+    OPENAI_API_KEY: ${param:OPENAI_API_KEY}
 
 functions:
   ask:
