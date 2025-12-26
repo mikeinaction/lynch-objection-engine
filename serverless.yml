@@ -4,6 +4,8 @@ provider:
   name: aws
   region: us-east-1
   runtime: nodejs18.x
+  environment:
+    OPENAI_API_KEY: ${param:OPENAI_API_KEY}
 
 functions:
   ask:
