@@ -15,3 +15,7 @@ functions:
       - httpApi:
           path: /ask
           method: post
+
+package:
+  patterns:
+    - node_modules/**
