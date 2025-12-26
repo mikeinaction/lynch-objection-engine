@@ -5,9 +5,20 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
+
   environment:
     OPENAI_API_KEY: ${param:OPENAI_API_KEY, ''}
-    
+
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://mikeinaction.github.io
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - POST
+        - OPTIONS
+
 functions:
   ask:
     handler: handler.ask
@@ -19,4 +30,3 @@ functions:
 package:
   patterns:
     - node_modules/**
-
