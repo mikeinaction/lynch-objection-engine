@@ -6,10 +6,10 @@ provider:
   runtime: nodejs18.x
 
 functions:
-  ping:
-    handler: handler.ping
+  ask:
+    handler: handler.ask
     events:
       - httpApi:
-          path: /ping
-          method: get
+          path: /ask
+          method: post
 # initial deploy
