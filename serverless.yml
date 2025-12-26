@@ -1,9 +1,10 @@
 service: objection-api
+frameworkVersion: "4"
 
 provider:
   name: aws
-  region: us-east-1
   runtime: nodejs18.x
+  region: us-east-1
   environment:
     OPENAI_API_KEY: ${param:OPENAI_API_KEY}
 
@@ -14,4 +15,3 @@ functions:
       - httpApi:
           path: /ask
           method: post
-# initial deploy
