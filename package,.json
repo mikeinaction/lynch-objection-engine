@@ -1,0 +1,7 @@
+{
+  "name": "objection-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "openai": "^4.29.0"
+  }
+}
