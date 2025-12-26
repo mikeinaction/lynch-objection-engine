@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lynch Objection Engine</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f6f7f9; margin:0; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .card { background:#fff; border:1px solid #e6e8ee; border-radius:14px; padding:18px; box-shadow: 0 4px 14px rgba(0,0,0,0.05); }
+    h1 { margin:0 0 6px 0; font-size: 20px; }
+    .sub { margin:0 0 14px 0; color:#555; font-size: 13px; line-height: 1.35; }
+    textarea { width:100%; min-height: 90px; padding:12px; border-radius:12px; border:1px solid #cfd6e4; font-size: 15px; resize: vertical; }
+    .row { display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap: wrap; }
+    button { border:0; border-radius:12px; padding:12px 14px; font-size: 14px; cursor:pointer; background:#0b5cff; color:#fff; }
+    button:disabled { opacity:0.6; cursor:not-allowed; }
+    .pill { font-size: 12px; color:#333; background:#eef2ff; padding:8px 10px; border-radius: 999px; border:1px solid #dbe2ff; }
+    .chat { margin-top: 14px; display:flex; flex-direction: column; gap: 10px; }
+    .msg { padding:12px; border-radius: 12px; border:1px solid #e6e8ee; background:#fafbff; white-space: pre-wrap; line-height: 1.45; }
+    .msg.user { background:#fff; }
+    .msg.bot { background:#f3f7ff; }
+    .hint { color:#666; font-size: 12px; margin-top: 10px; }
+    .err { background:#fff3f3; border-color:#ffd1d1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Lynch Objection Engine</h1>
+      <p class="sub">
+        Paste exactly what the customer said. Keep it short. No customer names.
+      </p>
+
+      <textarea id="input" placeholder="Example: I need to think about it and shop around."></textarea>
+
+      <div class="row">
+        <button id="send">Send</button>
+        <span class="pill" id="status">Ready</span>
+      </div>
+
+      <div class="chat" id="chat"></div>
+
+      <div class="hint">
+        Tip: Ctrl + Enter sends fast.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // IMPORTANT: this is your live API endpoint
+    const API_URL = "https://wjj3azrzke.execute-api.us-east-1.amazonaws.com/ask";
+
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const chat = document.getElementById("chat");
+    const statusPill = document.getElementById("status");
+
+    function addMessage(text, who, isError=false) {
+      const div = document.createElement("div");
+      div.className = `msg ${who}` + (isError ? " err" : "");
+      div.textContent = text;
+      chat.prepend(div);
+    }
+
+    function setStatus(text, busy=false) {
+      statusPill.textContent = text;
+      sendBtn.disabled = busy;
+    }
+
+    async function send() {
+      const text = (input.value || "").trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      input.value = "";
+      setStatus("Thinking...", true);
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          addMessage(data?.error || `HTTP ${res.status}`, "bot", true);
+          setStatus("Error", false);
+          return;
+        }
+
+        addMessage(data?.reply || "No response", "bot");
+        setStatus("Ready", false);
+      } catch (e) {
+        addMessage(e.message || "Request failed", "bot", true);
+        setStatus("Error", false);
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) send();
+    });
+  </script>
+</body>
+</html>
