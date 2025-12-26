@@ -1,6 +1,8 @@
-module.exports.ping = async () => {
+module.exports.ask = async (event) => {
   return {
     statusCode: 200,
-    body: JSON.stringify({ ok: true })
+    body: JSON.stringify({
+      message: "ask endpoint is live"
+    })
   };
 };
