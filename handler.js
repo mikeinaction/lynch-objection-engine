@@ -30,13 +30,35 @@ module.exports.ask = async (event) => {
       })
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+
+    // Temporary debug. Remove after you confirm replies are flowing.
+    console.log("OPENAI RAW:", JSON.stringify(data));
+
+    if (!res.ok) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          reply: "OpenAI call failed",
+          error: data?.error?.message || `HTTP ${res.status}`
+        })
+      };
+    }
+
+    const reply =
+      data.output_text ||
+      (Array.isArray(data?.output)
+        ? data.output
+            .flatMap((o) => Array.isArray(o?.content) ? o.content : [])
+            .map((c) => c?.text)
+            .filter(Boolean)
+            .join(" ")
+        : "") ||
+      "No response";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        reply: data.output_text || "No response"
-      })
+      body: JSON.stringify({ reply })
     };
   } catch (err) {
     return {
