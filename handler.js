@@ -24,9 +24,14 @@ module.exports.ask = async (event) => {
       body: JSON.stringify({ reply: output })
     };
   } catch (err) {
+    console.error("ERROR:", err);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message })
+      body: JSON.stringify({
+        error: err.message,
+        stack: err.stack
+      })
     };
   }
 };
