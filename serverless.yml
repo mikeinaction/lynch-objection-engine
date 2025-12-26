@@ -1,1 +1,14 @@
 service: objection-api
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: nodejs18.x
+
+functions:
+  ping:
+    handler: handler.ping
+    events:
+      - httpApi:
+          path: /ping
+          method: get
