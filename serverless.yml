@@ -12,3 +12,4 @@ functions:
       - httpApi:
           path: /ping
           method: get
+# initial deploy
