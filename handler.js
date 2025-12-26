@@ -1,8 +1,32 @@
-module.exports.ask = async (event) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: "ask endpoint is live"
-    })
-  };
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+export const ask = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const userMessage = body.text || "Say hello.";
+
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: userMessage
+    });
+
+    const output =
+      response.output_text ||
+      response.output?.[0]?.content?.[0]?.text ||
+      "No response";
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ reply: output })
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message })
+    };
+  }
 };
