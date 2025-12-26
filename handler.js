@@ -1,7 +1,12 @@
-const fetch = global.fetch || require("node-fetch");
-
 module.exports.ask = async (event) => {
   try {
+    // Use built-in fetch on Node 18. If not available, fall back to undici safely.
+    let fetchFn = globalThis.fetch;
+    if (!fetchFn) {
+      const undici = require("undici");
+      fetchFn = undici.fetch;
+    }
+
     const body = JSON.parse(event.body || "{}");
     const userMessage = body.text || "Say hello.";
 
@@ -18,7 +23,7 @@ module.exports.ask = async (event) => {
       };
     }
 
-    const res = await fetch("https://api.openai.com/v1/responses", {
+    const res = await fetchFn("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -31,9 +36,6 @@ module.exports.ask = async (event) => {
     });
 
     const data = await res.json().catch(() => ({}));
-
-    // Temporary debug. Remove after you confirm replies are flowing.
-    console.log("OPENAI RAW:", JSON.stringify(data));
 
     if (!res.ok) {
       return {
@@ -49,7 +51,7 @@ module.exports.ask = async (event) => {
       data.output_text ||
       (Array.isArray(data?.output)
         ? data.output
-            .flatMap((o) => Array.isArray(o?.content) ? o.content : [])
+            .flatMap((o) => (Array.isArray(o?.content) ? o.content : []))
             .map((c) => c?.text)
             .filter(Boolean)
             .join(" ")
@@ -61,6 +63,7 @@ module.exports.ask = async (event) => {
       body: JSON.stringify({ reply })
     };
   } catch (err) {
+    console.log("HANDLER ERROR:", err);
     return {
       statusCode: 200,
       body: JSON.stringify({
