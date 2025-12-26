@@ -1,10 +1,10 @@
-import OpenAI from "openai";
+const OpenAI = require("openai");
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-export const ask = async (event) => {
+module.exports.ask = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}");
     const userMessage = body.text || "Say hello.";
