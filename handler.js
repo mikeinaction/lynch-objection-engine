@@ -1,9 +1,13 @@
+const fetch = global.fetch || require("node-fetch");
+
 module.exports.ask = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}");
     const userMessage = body.text || "Say hello.";
 
     const apiKey = process.env.OPENAI_API_KEY;
+    console.log("HAS OPENAI_API_KEY:", Boolean(apiKey));
+
     if (!apiKey) {
       return {
         statusCode: 200,
@@ -26,17 +30,7 @@ module.exports.ask = async (event) => {
       })
     });
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          reply: "OpenAI call failed",
-          error: data?.error?.message || `HTTP ${res.status}`
-        })
-      };
-    }
+    const data = await res.json();
 
     return {
       statusCode: 200,
