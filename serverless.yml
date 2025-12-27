@@ -7,6 +7,8 @@ provider:
   region: us-east-1
   environment:
     OPENAI_API_KEY: ${param:OPENAI_API_KEY, ''}
+    GOOGLE_SHEET_ID: ${param:GOOGLE_SHEET_ID, ''}
+    GOOGLE_CREDS_B64: ${param:GOOGLE_CREDS_B64, ''}
 
   httpApi:
     cors:
