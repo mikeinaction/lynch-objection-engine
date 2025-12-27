@@ -1,6 +1,10 @@
 service: objection-api
 frameworkVersion: "4"
 
+# Optional (recommended if you want Serverless Dashboard features)
+# org: mikeinaction
+# app: lynch-objection-engine
+
 provider:
   name: aws
   runtime: nodejs18.x
@@ -34,4 +38,3 @@ package:
     - handler.js
     - package.json
     - node_modules/**
-
