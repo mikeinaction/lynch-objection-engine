@@ -1,5 +1,5 @@
 module.exports.ask = async (event) => {
-  // CORS headers so the browser can read responses
+  // CORS headers
   const corsHeaders = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "https://mikeinaction.github.io",
@@ -7,18 +7,22 @@ module.exports.ask = async (event) => {
     "Access-Control-Allow-Methods": "POST,OPTIONS"
   };
 
-  // Handle preflight (browser OPTIONS request)
+  // Handle CORS preflight
   const method = event?.requestContext?.http?.method || event?.httpMethod;
   if (method === "OPTIONS") {
-    return { statusCode: 204, headers: corsHeaders, body: "" };
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ""
+    };
   }
 
   try {
-    // Use built-in fetch on Node 18. If not available, fall back to undici safely.
+    // Node 18 has fetch; fallback just in case
     let fetchFn = globalThis.fetch;
     if (!fetchFn) {
-      const undici = require("undici");
-      fetchFn = undici.fetch;
+      const { fetch } = require("undici");
+      fetchFn = fetch;
     }
 
     const body = JSON.parse(event.body || "{}");
@@ -79,7 +83,7 @@ module.exports.ask = async (event) => {
       body: JSON.stringify({ reply })
     };
   } catch (err) {
-    console.log("HANDLER ERROR:", err);
+    console.error("HANDLER ERROR:", err);
     return {
       statusCode: 500,
       headers: corsHeaders,
@@ -89,3 +93,4 @@ module.exports.ask = async (event) => {
     };
   }
 };
+
