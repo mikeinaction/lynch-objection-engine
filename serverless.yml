@@ -35,6 +35,6 @@ functions:
 
 package:
   patterns:
-    - handler.js
-    - package.json
+    - "!**"
+    - "handler.js"
 
