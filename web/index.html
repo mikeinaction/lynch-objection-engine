@@ -37,9 +37,8 @@
     .dot.busy { background:#f0ad4e; }
     .dot.err  { background:#dc3545; }
 
-    /* Chat layout */
     .chatShell {
-      height: calc(100vh - 170px); /* keeps input visible and avoids overlap */
+      height: calc(100vh - 170px);
       min-height: 420px;
       display:flex;
       flex-direction: column;
@@ -79,22 +78,17 @@
       color:#fff;
       border-bottom-right-radius: 6px;
     }
-    .bubble.bot {
-      background:#ffffff;
-      border-bottom-left-radius: 6px;
-    }
-    .bubble.err {
-      border-color: #dc3545;
-      background:#fff5f5;
-    }
+    .bubble.bot { background:#ffffff; border-bottom-left-radius: 6px; }
+    .bubble.err { border-color: #dc3545; background:#fff5f5; }
 
-    .composer {
+    form.composer {
       border-top: 1px solid #eef0f5;
       background:#fff;
       padding: 10px;
       display:flex;
       gap: 10px;
       align-items: flex-end;
+      margin: 0;
     }
 
     textarea {
@@ -123,11 +117,7 @@
     }
     button:disabled { opacity:0.6; cursor:not-allowed; }
 
-    .hint {
-      margin-top: 10px;
-      font-size: 12px;
-      color:#666;
-    }
+    .hint { margin-top: 10px; font-size: 12px; color:#666; }
     code { background:#f1f3f7; padding:2px 5px; border-radius:6px; }
   </style>
 </head>
@@ -148,10 +138,10 @@
       <div class="chatShell">
         <div id="messages" class="messages"></div>
 
-        <div class="composer">
+        <form id="composer" class="composer">
           <textarea id="input" placeholder="Type your objection..."></textarea>
-          <button id="sendBtn">Send</button>
-        </div>
+          <button id="sendBtn" type="submit">Send</button>
+        </form>
       </div>
 
       <div class="hint">
@@ -161,100 +151,95 @@
   </div>
 
   <script>
-<<<<<<< HEAD
-    // Updated API endpoint
-=======
-    // IMPORTANT: this is your live API endpoint
->>>>>>> f720a1c (Ignore build artifacts and update API endpoint)
     const API_URL = "https://69cnmprz12.execute-api.us-east-1.amazonaws.com/ask";
 
-    const messagesEl = document.getElementById("messages");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("sendBtn");
-    const dot = document.getElementById("dot");
-    const statusText = document.getElementById("statusText");
+    window.addEventListener("DOMContentLoaded", () => {
+      const messagesEl = document.getElementById("messages");
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("sendBtn");
+      const composer = document.getElementById("composer");
+      const dot = document.getElementById("dot");
+      const statusText = document.getElementById("statusText");
 
-    function setStatus(text, mode) {
-      statusText.textContent = text;
-      dot.classList.remove("ready", "busy", "err");
-      if (mode === "busy") dot.classList.add("busy");
-      else if (mode === "err") dot.classList.add("err");
-      else dot.classList.add("ready");
-    }
-
-    function addMessage(text, who, isError) {
-      const row = document.createElement("div");
-      row.className = `msgRow ${who}`;
-
-      const bubble = document.createElement("div");
-      bubble.className = `bubble ${who}` + (isError ? " err" : "");
-      bubble.textContent = text;
-
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-
-      // keep newest messages visible (input stays pinned at bottom)
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function autoGrow(el) {
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, 140) + "px";
-    }
-
-    async function send() {
-      const text = (input.value || "").trim();
-      if (!text) return;
-
-      addMessage(text, "user");
-      input.value = "";
-      autoGrow(input);
-
-      sendBtn.disabled = true;
-      setStatus("Thinking...", "busy");
-
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          addMessage(data?.error || `HTTP ${res.status}`, "bot", true);
-          setStatus("Error", "err");
-          return;
-        }
-
-        addMessage(data?.reply || "No response", "bot");
-        setStatus("Ready", "ready");
-      } catch (e) {
-        addMessage(e?.message || "Request failed", "bot", true);
-        setStatus("Error", "err");
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
+      function setStatus(text, mode) {
+        statusText.textContent = text;
+        dot.classList.remove("ready", "busy", "err");
+        if (mode === "busy") dot.classList.add("busy");
+        else if (mode === "err") dot.classList.add("err");
+        else dot.classList.add("ready");
       }
-    }
 
-    // Send button
-    sendBtn.addEventListener("click", send);
+      function addMessage(text, who, isError) {
+        const row = document.createElement("div");
+        row.className = `msgRow ${who}`;
 
-    // Enter to send, Shift+Enter for newline
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${who}` + (isError ? " err" : "");
+        bubble.textContent = text;
+
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function autoGrow(el) {
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 140) + "px";
+      }
+
+      async function send() {
+        const text = (input.value || "").trim();
+        if (!text) return;
+
+        addMessage(text, "user");
+        input.value = "";
+        autoGrow(input);
+
+        sendBtn.disabled = true;
+        setStatus("Thinking...", "busy");
+
+        try {
+          const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            addMessage(data?.error || `HTTP ${res.status}`, "bot", true);
+            setStatus("Error", "err");
+            return;
+          }
+
+          addMessage(data?.reply || "No response", "bot");
+          setStatus("Ready", "ready");
+        } catch (e) {
+          addMessage(e?.message || "Request failed", "bot", true);
+          setStatus("Error", "err");
+        } finally {
+          sendBtn.disabled = false;
+          input.focus();
+        }
+      }
+
+      composer.addEventListener("submit", (e) => {
         e.preventDefault();
         send();
-      }
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+
+      input.addEventListener("input", () => autoGrow(input));
+      input.focus();
     });
-
-    // Auto-grow textarea
-    input.addEventListener("input", () => autoGrow(input));
-
-    // Initial focus
-    input.focus();
   </script>
 </body>
 </html>
+
