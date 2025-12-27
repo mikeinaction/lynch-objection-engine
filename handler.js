@@ -31,7 +31,8 @@ module.exports.ask = async (event) => {
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        input: userMessage
+        input: userMessage,
+        max_output_tokens: 150
       })
     });
 
