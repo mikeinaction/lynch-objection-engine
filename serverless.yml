@@ -29,4 +29,7 @@ functions:
 
 package:
   patterns:
+    - handler.js
+    - package.json
     - node_modules/**
+
