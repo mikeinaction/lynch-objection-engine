@@ -22,6 +22,7 @@ provider:
 functions:
   ask:
     handler: handler.ask
+    timeout: 30
     events:
       - httpApi:
           path: /ask
