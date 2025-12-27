@@ -1,5 +1,6 @@
+// handler.js
 module.exports.ask = async (event) => {
-  // CORS headers
+  // CORS headers so your GitHub Pages site can call the API
   const corsHeaders = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "https://mikeinaction.github.io",
@@ -7,41 +8,27 @@ module.exports.ask = async (event) => {
     "Access-Control-Allow-Methods": "POST,OPTIONS"
   };
 
-  // Handle CORS preflight
+  // Handle CORS preflight (browser OPTIONS request)
   const method = event?.requestContext?.http?.method || event?.httpMethod;
   if (method === "OPTIONS") {
-    return {
-      statusCode: 204,
-      headers: corsHeaders,
-      body: ""
-    };
+    return { statusCode: 204, headers: corsHeaders, body: "" };
   }
 
   try {
-    // Node 18 has fetch; fallback just in case
-    let fetchFn = globalThis.fetch;
-    if (!fetchFn) {
-      const { fetch } = require("undici");
-      fetchFn = fetch;
-    }
-
     const body = JSON.parse(event.body || "{}");
-    const userMessage = body.text || "Say hello.";
+    const userMessage = (body.text || "Say hello.").toString();
 
     const apiKey = process.env.OPENAI_API_KEY;
-    console.log("HAS OPENAI_API_KEY:", Boolean(apiKey));
-
     if (!apiKey) {
       return {
         statusCode: 500,
         headers: corsHeaders,
-        body: JSON.stringify({
-          error: "Missing OPENAI_API_KEY in environment"
-        })
+        body: JSON.stringify({ error: "Missing OPENAI_API_KEY in environment" })
       };
     }
 
-    const res = await fetchFn("https://api.openai.com/v1/responses", {
+    // Node.js 18+ has global fetch in Lambda. No undici, no dependencies.
+    const res = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -50,7 +37,7 @@ module.exports.ask = async (event) => {
       body: JSON.stringify({
         model: "gpt-4.1-mini",
         input: userMessage,
-        max_output_tokens: 150
+        max_output_tokens: 200
       })
     });
 
@@ -83,14 +70,12 @@ module.exports.ask = async (event) => {
       body: JSON.stringify({ reply })
     };
   } catch (err) {
-    console.error("HANDLER ERROR:", err);
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({
-        error: err.message || "Unknown server error"
-      })
+      body: JSON.stringify({ error: err?.message || "Unknown server error" })
     };
   }
 };
+
 
