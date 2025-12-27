@@ -1,4 +1,18 @@
 module.exports.ask = async (event) => {
+  // CORS headers so the browser can read responses
+  const corsHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "https://mikeinaction.github.io",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS"
+  };
+
+  // Handle preflight (browser OPTIONS request)
+  const method = event?.requestContext?.http?.method || event?.httpMethod;
+  if (method === "OPTIONS") {
+    return { statusCode: 204, headers: corsHeaders, body: "" };
+  }
+
   try {
     // Use built-in fetch on Node 18. If not available, fall back to undici safely.
     let fetchFn = globalThis.fetch;
@@ -15,9 +29,9 @@ module.exports.ask = async (event) => {
 
     if (!apiKey) {
       return {
-        statusCode: 200,
+        statusCode: 500,
+        headers: corsHeaders,
         body: JSON.stringify({
-          reply: "OpenAI call failed",
           error: "Missing OPENAI_API_KEY in environment"
         })
       };
@@ -40,10 +54,10 @@ module.exports.ask = async (event) => {
 
     if (!res.ok) {
       return {
-        statusCode: 200,
+        statusCode: 502,
+        headers: corsHeaders,
         body: JSON.stringify({
-          reply: "OpenAI call failed",
-          error: data?.error?.message || `HTTP ${res.status}`
+          error: data?.error?.message || `OpenAI HTTP ${res.status}`
         })
       };
     }
@@ -61,15 +75,16 @@ module.exports.ask = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({ reply })
     };
   } catch (err) {
     console.log("HANDLER ERROR:", err);
     return {
-      statusCode: 200,
+      statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
-        reply: "OpenAI call failed",
-        error: err.message
+        error: err.message || "Unknown server error"
       })
     };
   }
