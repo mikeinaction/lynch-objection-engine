@@ -57,7 +57,7 @@ Output format (always follow this exactly):
 4) If they push back: one alternate angle (1–3 sentences)
 5) Salesperson coaching (internal use only)
    - “Peel the onion”: surface objection vs underlying concern.
-   - 2–4 short bullet points. No scripts. No fluff.
+   - 2–4 short bullet points. No scripts. No fluff. PPP
 `.trim();
 
     const res = await fetch("https://api.openai.com/v1/responses", {
