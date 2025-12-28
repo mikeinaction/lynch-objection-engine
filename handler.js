@@ -1,4 +1,5 @@
-// handler.js
+const { google } = require("googleapis");
+
 module.exports.ask = async (event) => {
   const corsHeaders = {
     "Content-Type": "application/json",
@@ -14,109 +15,125 @@ module.exports.ask = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const userMessage = (body.text || "Say hello.").toString();
+    const userMessage = (body.text || "").toString();
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+    const saKeyB64 = process.env.GOOGLE_SA_KEY_B64;
+
+    if (!openaiKey || !sheetId || !saKeyB64) {
       return {
         statusCode: 500,
         headers: corsHeaders,
-        body: JSON.stringify({ error: "Missing OPENAI_API_KEY in environment" })
+        body: JSON.stringify({ error: "Missing environment variables" })
       };
     }
 
-    const instructions = `
-You are "Lynch Toyota Objection Engine".
+    const saKey = JSON.parse(Buffer.from(saKeyB64, "base64").toString("utf8"));
 
-Rules:
-- Do NOT sound like a generic assistant. Do NOT say things like “I can help you craft a message” or ask for more context unless truly required.
-- Assume the salesperson is live with a customer right now (in-person, on the phone, or texting).
-- Assume the salesperson is the one typing, but the message may be copied directly from the customer.
-- Assume all responses are in reference to Lynch Toyota of Manchester, CT, selling new Toyotas, Toyota Certified, and other pre-owned vehicles.
-- Be confident, calm, natural, and very human. No corporate fluff.
-- Use short, punchy sentences. No lectures.
-- Never mention policies, safety disclaimers, or that you are an AI.
-- If numbers are not provided, do not invent them. Speak in ranges or principles.
-- Always aim to: acknowledge, reframe, ask a control question, and propose a clear next step.
-- Use the influence and persuasion style of Jim Rohn, Andy Elliott, Grant Cardone, and Tony Robbins for inspiration.
-- If being aggressive or assertive, it must be friendly, slightly humorous, and delivered as if said with a relaxed smile.
+    const auth = new google.auth.JWT({
+      email: saKey.client_email,
+      key: saKey.private_key,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    });
 
-Output format (always follow this exactly):
+    const sheets = google.sheets({ version: "v4", auth });
 
-- Quick one-liner (10–40 words) that sets the goal and tone for what the salesperson will say next.
+    const sheetRes = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: "Objections!A:I"
+    });
 
-- Main word-track
-  - If the communication method is NOT specified, provide word-tracks for:
-    • In-Person / Phone
-    • Email
-    • Text
-  - If the communication method IS specified, provide only one word-track for that method.
-  - Each word-track should be 2–6 sentences, or longer only if truly necessary or if pulled directly from Google Sheets.
-  - These must be exactly what the salesperson should say or send. No explanations.
+    const rows = sheetRes.data.values || [];
+    if (rows.length < 2) {
+      throw new Error("Sheet has no data");
+    }
 
-- Optional follow-up question(s) to regain control
-  - Bullet points.
-  - Use one question, or two only if necessary.
+    const headers = rows[0];
+    const data = rows.slice(1).map((r) =>
+      headers.reduce((o, h, i) => {
+        o[h] = r[i] || "";
+        return o;
+      }, {})
+    );
 
-- If they push back: one alternate angle (1–3 sentences, or longer only if necessary)
+    const msg = userMessage.toLowerCase();
+    const match = data.find((r) => {
+      const objection = (r["Objection"] || "").toLowerCase().trim();
+      return objection && msg.includes(objection);
+    });
 
-- Salesperson coaching (internal use only)
-  - Peel the objection like an onion.
-  - Identify the surface objection vs the underlying concern.
-  - 2–5 short bullet points. No scripts. No fluff.
+    if (!match) {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          reply: "I couldn’t find that objection in the sheet yet."
+        })
+      };
+    }
 
-`.trim();
+    // NOTE: Your sheet header is currently "Test Response".
+    // If you rename it to "Text Response" in Google Sheets, change this one line accordingly.
+    const prompt =
+      "Customer said:\n" + userMessage + "\n\n" +
+      "Matched objection:\n" + (match["Objection"] || "") + "\n\n" +
+      "Goal:\n" + (match["Goal or Internal Framing"] || "") + "\n\n" +
+      "Tone:\n" + (match["Tone Lock"] || "") + "\n\n" +
+      "In Person:\n" + (match["In Person Response"] || "") + "\n\n" +
+      "Phone:\n" + (match["Phone Response"] || "") + "\n\n" +
+      "Email:\n" + (match["Email Response"] || "") + "\n\n" +
+      "Text:\n" + (match["Test Response"] || "") + "\n\n" +
+      "Rules:\n" + (match["Rules for AI"] || "") + "\n\n" +
+      "Additional coaching:\n" + (match["Additional Training for Salesperson"] || "");
 
     const res = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        instructions,
-        input: userMessage,
-        max_output_tokens: 900
+        input: prompt,
+        max_output_tokens: 700
       })
     });
 
-    const data = await res.json().catch(() => ({}));
+    const json = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       return {
         statusCode: 502,
         headers: corsHeaders,
         body: JSON.stringify({
-          error: data?.error?.message || `OpenAI HTTP ${res.status}`
+          error: json?.error?.message || `OpenAI HTTP ${res.status}`
         })
       };
     }
 
+    // Robust extraction so we don't lose text if output_text isn't present
     const reply =
-      data.output_text ||
-      (Array.isArray(data?.output)
-        ? data.output
+      json.output_text ||
+      (Array.isArray(json?.output)
+        ? json.output
             .flatMap((o) => (Array.isArray(o?.content) ? o.content : []))
             .map((c) => c?.text)
             .filter(Boolean)
             .join(" ")
         : "") ||
-      "No response";
+      "No response generated.";
 
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({
-        reply,
-        build: "handler-build-2025-12-28c"
-      })
+      body: JSON.stringify({ reply, source: "google-sheet" })
     };
   } catch (err) {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: err?.message || "Unknown server error" })
+      body: JSON.stringify({ error: err.message })
     };
   }
 };
