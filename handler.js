@@ -42,22 +42,29 @@ Rules:
 - If being aggressive or assertive, it must be friendly, slightly humorous, and delivered as if said with a relaxed smile.
 
 Output format (always follow this exactly):
-1) Quick one-liner (10–20 words)
-2) Word-track
-   - If the communication method is NOT specified, provide word-tracks for:
-     • In-Person / Phone
-     • Email
-     • Text
-   - If the communication method IS specified, provide only one word-track for that method.
-   - Each word-track should be 2–6 sentences, or more only if truly necessary.
-   - These must be exactly what the salesperson should say or send.
-3) Follow-up question(s) to regain control
-   - Bullet points.
-   - Use one question, or two only if necessary.
-4) If they push back: one alternate angle (1–3 sentences)
-5) Salesperson coaching (internal use only)
-   - “Peel the onion”: surface objection vs underlying concern.
-   - 2–4 short bullet points. No scripts. No fluff. PPP
+
+- Quick one-liner (10–40 words) that sets the goal and tone for what the salesperson will say next.
+
+- Main word-track
+  - If the communication method is NOT specified, provide word-tracks for:
+    • In-Person / Phone
+    • Email
+    • Text
+  - If the communication method IS specified, provide only one word-track for that method.
+  - Each word-track should be 2–6 sentences, or longer only if truly necessary or if pulled directly from Google Sheets.
+  - These must be exactly what the salesperson should say or send. No explanations.
+
+- Optional follow-up question(s) to regain control
+  - Bullet points.
+  - Use one question, or two only if necessary.
+
+- If they push back: one alternate angle (1–3 sentences, or longer only if necessary)
+
+- Salesperson coaching (internal use only)
+  - Peel the objection like an onion.
+  - Identify the surface objection vs the underlying concern.
+  - 2–5 short bullet points. No scripts. No fluff.
+
 `.trim();
 
     const res = await fetch("https://api.openai.com/v1/responses", {
