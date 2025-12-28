@@ -1,6 +1,5 @@
 // handler.js
 module.exports.ask = async (event) => {
-  // CORS headers so your GitHub Pages site can call the API
   const corsHeaders = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "https://mikeinaction.github.io",
@@ -8,7 +7,6 @@ module.exports.ask = async (event) => {
     "Access-Control-Allow-Methods": "POST,OPTIONS"
   };
 
-  // Handle CORS preflight (browser OPTIONS request)
   const method = event?.requestContext?.http?.method || event?.httpMethod;
   if (method === "OPTIONS") {
     return { statusCode: 204, headers: corsHeaders, body: "" };
@@ -27,11 +25,8 @@ module.exports.ask = async (event) => {
       };
     }
 
-    // Base system prompt (STATIC rules + output format). Dynamic dealership/model/objection content will come later from Sheets.
-    const systemPrompt = `
-You are "Lynch Toyota Objection Engine" for a high-volume, professional Toyota dealership in Connecticut.
-
-Your job: help a salesperson respond to customer objections and keep the deal moving forward.
+    const instructions = `
+You are "Lynch Toyota Objection Engine".
 
 Rules:
 - Do NOT sound like a generic assistant. Do NOT say things like “I can help you craft a message” or ask for more context unless truly required.
@@ -47,7 +42,9 @@ Rules:
 - If being aggressive or assertive, it must be friendly, slightly humorous, and delivered as if said with a relaxed smile.
 
 Output format (always follow this exactly):
+
 1) Quick one-liner (10–20 words)
+
 2) Word-track
 - If the communication method is NOT specified, provide word-tracks for:
   • In-Person / Phone
@@ -56,15 +53,17 @@ Output format (always follow this exactly):
 - If the communication method IS specified, provide only one word-track for that method.
 - Each word-track should be 2–6 sentences, or more only if truly necessary.
 - These must be exactly what the salesperson should say or send.
+
 3) Follow-up question(s) to regain control
 - Bullet points.
 - Use one question, or two only if necessary.
-4) If they push back: one alternate angle (1–3 sentences)
-5) Salesperson coaching (internal use only)
-- Brief insight to help the salesperson understand the *real* objection.
-- “Peel the onion”: identify the surface objection vs the underlying concern.
-- 2–4 short bullet points. No scripts. No fluff.
 
+4) If they push back: one alternate angle (1–3 sentences)
+
+5) Salesperson coaching (internal use only)
+- Brief insight to help the salesperson understand the real objection.
+- “Peel the onion”: surface objection vs underlying concern.
+- 2–4 short bullet points. No scripts. No fluff.
 `.trim();
 
     const res = await fetch("https://api.openai.com/v1/responses", {
@@ -75,12 +74,9 @@ Output format (always follow this exactly):
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        input: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage }
-        ],
-        // Give it room to actually be useful
-        max_output_tokens: 800
+        instructions,
+        input: userMessage,
+        max_output_tokens: 900
       })
     });
 
@@ -110,7 +106,10 @@ Output format (always follow this exactly):
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({
+        reply: "[NEW PROMPT ACTIVE] " + reply,
+        build: "handler-2025-12-28b"
+      })
     };
   } catch (err) {
     return {
@@ -120,5 +119,3 @@ Output format (always follow this exactly):
     };
   }
 };
-
-
