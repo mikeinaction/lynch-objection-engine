@@ -42,28 +42,22 @@ Rules:
 - If being aggressive or assertive, it must be friendly, slightly humorous, and delivered as if said with a relaxed smile.
 
 Output format (always follow this exactly):
-
 1) Quick one-liner (10–20 words)
-
 2) Word-track
-- If the communication method is NOT specified, provide word-tracks for:
-  • In-Person / Phone
-  • Email
-  • Text
-- If the communication method IS specified, provide only one word-track for that method.
-- Each word-track should be 2–6 sentences, or more only if truly necessary.
-- These must be exactly what the salesperson should say or send.
-
+   - If the communication method is NOT specified, provide word-tracks for:
+     • In-Person / Phone
+     • Email
+     • Text
+   - If the communication method IS specified, provide only one word-track for that method.
+   - Each word-track should be 2–6 sentences, or more only if truly necessary.
+   - These must be exactly what the salesperson should say or send.
 3) Follow-up question(s) to regain control
-- Bullet points.
-- Use one question, or two only if necessary.
-
+   - Bullet points.
+   - Use one question, or two only if necessary.
 4) If they push back: one alternate angle (1–3 sentences)
-
 5) Salesperson coaching (internal use only)
-- Brief insight to help the salesperson understand the real objection.
-- “Peel the onion”: surface objection vs underlying concern.
-- 2–4 short bullet points. No scripts. No fluff.
+   - “Peel the onion”: surface objection vs underlying concern.
+   - 2–4 short bullet points. No scripts. No fluff.
 `.trim();
 
     const res = await fetch("https://api.openai.com/v1/responses", {
@@ -107,8 +101,8 @@ Output format (always follow this exactly):
       statusCode: 200,
       headers: corsHeaders,
       body: JSON.stringify({
-        reply: "[NEW PROMPT ACTIVE] " + reply,
-        build: "handler-2025-12-28b"
+        reply,
+        build: "handler-build-2025-12-28c"
       })
     };
   } catch (err) {
@@ -119,3 +113,4 @@ Output format (always follow this exactly):
     };
   }
 };
+
